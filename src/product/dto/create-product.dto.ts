@@ -9,6 +9,10 @@ export class CreateProductDto {
   @IsString()
   description!: string;
 
+  @IsOptional()
+  @IsString()
+  image!: string;
+
   @Type(()=>Number)
   @IsNumber()
   @Min(0)
