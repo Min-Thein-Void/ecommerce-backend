@@ -1,0 +1,5 @@
+api list 
+
+1. product crud + image upload
+2. authentication
+3. create order

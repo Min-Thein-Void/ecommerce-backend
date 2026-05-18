@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto.js';
 import { PrismaService } from '../prisma.service.js';
+import { error } from 'console';
+import { OrderStatus } from '../generated/prisma/enums.js';
 
 @Injectable()
 export class OrderService {
@@ -69,5 +71,35 @@ export class OrderService {
         },
       });
     });
+  }
+
+  async getOrders() {
+    const orders = await this.prisma.order.findMany({
+      include: {
+        items: true,
+      },
+    });
+    return orders;
+  }
+
+  async orderStatusUpdate(id: number, status: OrderStatus) {
+    const order = await this.prisma.order.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    if (!order) {
+      throw new error('order not found');
+    }
+
+    const updatedOrder = await this.prisma.order.update({
+      where: { id: id },
+      data: {
+        status: status,
+      },
+    });
+
+    return updatedOrder;
   }
 }
