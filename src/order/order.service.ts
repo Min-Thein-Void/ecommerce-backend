@@ -1,37 +1,45 @@
 import { Injectable } from '@nestjs/common';
-import { CreateOrderDto } from './dto/create-order.dto.js';
 import { PrismaService } from '../prisma.service.js';
 import { error } from 'console';
 import { OrderStatus } from '../generated/prisma/enums.js';
+import { CreateOrderDto, OrderItemDto } from './dto/create-order.dto.js';
 
 @Injectable()
 export class OrderService {
   constructor(private readonly prisma: PrismaService) {}
-  async createOrder(userId: number, dto: CreateOrderDto) {
-    //Allows the running of a sequence of read/write operations that are guaranteed to either succeed or fail as a whole.
-    return this.prisma.$transaction(async (tx) => {
-      const productIds = dto.items.map((item) => item.productId);
-
-      const products = await tx.product.findMany({
-        where: {
-          id: { in: productIds },
+  async checkout(userId: number) {
+    return this.prisma.$transaction(async (db) => {
+      // 1. get cart with items + products
+      const cart = await db.cart.findFirst({
+        where: { userId },
+        include: {
+          items: {
+            include: {
+              product: true,
+            },
+          },
         },
       });
 
-      let total = 0;
+      if (!cart || cart.items.length === 0) {
+        throw new Error('Cart is empty');
+      }
 
-      const orderItems = dto.items.map((item) => {
-        const product = products.find((p) => p.id === item.productId);
+      let total: number = 0;
+
+      // 2. validate + prepare order items
+      const orderItems: OrderItemDto[] = cart.items.map((item) => {
+        const product = item.product;
 
         if (!product) {
           throw new Error(`Product ${item.productId} not found`);
         }
 
         if (product.stock < item.quantity) {
-          throw new Error('Not enough stock');
+          throw new Error(`Not enough stock for product ${product.id}`);
         }
 
-        const price = product.price;
+        const price: number = product.price;
         total += price * item.quantity;
 
         return {
@@ -41,20 +49,22 @@ export class OrderService {
         };
       });
 
-      // stock update here
-      for (const item of dto.items) {
-        await tx.product.update({
-          where: { id: item.productId },
-          data: {
-            stock: {
-              decrement: item.quantity,
+      // 3. update stock
+      await Promise.all(
+        cart.items.map((item) =>
+          db.product.update({
+            where: { id: item.productId },
+            data: {
+              stock: {
+                decrement: item.quantity,
+              },
             },
-          },
-        });
-      }
+          }),
+        ),
+      );
 
-      // create order
-      return tx.order.create({
+      // 4. create order
+      const order : CreateOrderDto = await db.order.create({
         data: {
           userId,
           total,
@@ -70,11 +80,20 @@ export class OrderService {
           },
         },
       });
+
+      // 5. clear cart
+      await db.cartItem.deleteMany({
+        where: {
+          cartId: cart.id,
+        },
+      });
+
+      return order;
     });
   }
 
   async getOrders() {
-    const orders = await this.prisma.order.findMany({
+    const orders : CreateOrderDto[] = await this.prisma.order.findMany({
       include: {
         items: true,
       },
