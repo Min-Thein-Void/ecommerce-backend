@@ -1,9 +1,9 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
 
-interface UserDetail{
-  email : string,
-  password : string
+interface UserDetail {
+  email: string;
+  password: string;
 }
 
 @Controller('auth')

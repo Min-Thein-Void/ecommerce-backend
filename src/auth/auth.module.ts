@@ -13,7 +13,7 @@ import { JwtStrategy } from './strategy/jwt.strategy/jwt.strategy.js';
       signOptions: { expiresIn: '7d' },
     }),
   ],
-  providers: [AuthService,JwtStrategy],
+  providers: [AuthService, JwtStrategy],
   controllers: [AuthController],
 })
 export class AuthModule {}

@@ -28,13 +28,13 @@ export class ProductController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @roles('ADMIN')
   @Post('create')
-  @UseInterceptors(FileInterceptor('image',multerConfig))
+  @UseInterceptors(FileInterceptor('image', multerConfig))
   createProduct(
     @UploadedFile() file: Express.Multer.File,
     @Body(CustomPipe) body: CreateProductDto,
   ) {
     console.log(file);
-    
+
     const imagePath = file?.filename;
 
     return this.productService.create({
@@ -46,6 +46,11 @@ export class ProductController {
   @Get('all')
   getProducts() {
     return this.productService.getProducts();
+  }
+
+  @Get(':id')
+  productDetail(@Param('id') id: string){
+     return this.productService.productDetail(id);
   }
 
   @roles('ADMIN')

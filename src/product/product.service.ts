@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service.js';
 import { CreateProductDto } from './dto/create-product.dto.js';
 import { GetProductsDto } from './dto/get-product.dto.js';
+import { Prisma } from '../generated/prisma/client.js';
 
 @Injectable()
 export class ProductService {
@@ -20,6 +21,30 @@ export class ProductService {
     return this.prisma.product.findMany({
       include: {
         category: true,
+        reviews: {
+          include: {
+            user: { select: { name: true } },
+          },
+        },
+      },
+    });
+  }
+
+  async productDetail(id: string) {
+    if(!id){
+      throw new Error('id not found')
+    }
+    return this.prisma.product.findUnique({
+      where: {
+        id: Number(id),
+      },
+      include: {
+        category: true,
+        reviews: {
+          include: {
+            user: { select: { name: true } },
+          },
+        },
       },
     });
   }
@@ -54,7 +79,7 @@ export class ProductService {
       limit = 10,
     } = query;
 
-    const where: any = {};
+    const where: Prisma.ProductWhereInput = {};
 
     if (search) {
       where.OR = [

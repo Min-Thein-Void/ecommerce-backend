@@ -13,16 +13,16 @@ export class CreateProductDto {
   @IsString()
   image!: string;
 
-  @Type(()=>Number)
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   price!: number;
 
-  @Type(()=>Number)
+  @Type(() => Number)
   @IsNumber()
   categoryId!: number;
 
-  @Type(()=>Number)
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   stock!: number;

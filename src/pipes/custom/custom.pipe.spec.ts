@@ -1,4 +1,4 @@
-import { CustomPipe } from './custom.pipe';
+import { CustomPipe } from './custom.pipe.js';
 
 describe('CustomPipe', () => {
   it('should be defined', () => {

@@ -14,12 +14,12 @@ export class UsersController {
 
   @Post('create')
   createUser(@Body() body: CreateUserDto) {
-    return this.usersService.create(body.email, body.password);
+    return this.usersService.create(body.name,body.email, body.password);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('profile')
-  getProfile(@getUser() user : getUserDto) {
+  getProfile(@getUser() user: getUserDto) {
     return user;
   }
 

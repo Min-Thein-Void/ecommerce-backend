@@ -64,7 +64,7 @@ export class OrderService {
       );
 
       // 4. create order
-      const order : CreateOrderDto = await db.order.create({
+      const order: CreateOrderDto = await db.order.create({
         data: {
           userId,
           total,
@@ -93,12 +93,28 @@ export class OrderService {
   }
 
   async getOrders() {
-    const orders : CreateOrderDto[] = await this.prisma.order.findMany({
+    const orders: CreateOrderDto[] = await this.prisma.order.findMany({
       include: {
         items: true,
       },
     });
     return orders;
+  }
+
+  async getMyOrders(userId: number) {
+    return this.prisma.order.findMany({
+      where: { userId: userId },
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
   }
 
   async orderStatusUpdate(id: number, status: OrderStatus) {
