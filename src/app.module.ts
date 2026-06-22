@@ -10,7 +10,6 @@ import { CategoryModule } from './category/category.module.js';
 import { OrderModule } from './order/order.module.js';
 import { CartModule } from './cart/cart.module.js';
 import { LoggerMiddleware } from './common/middlewares/logger.middleware.js';
-import { PaymentModule } from './payment/payment.module.js';
 import { ReviewModule } from './review/review.module.js';
 
 @Module({
@@ -22,7 +21,6 @@ import { ReviewModule } from './review/review.module.js';
     CategoryModule,
     OrderModule,
     CartModule,
-    PaymentModule,
     ReviewModule,
   ],
   controllers: [AppController],

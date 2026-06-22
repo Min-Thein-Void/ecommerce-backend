@@ -1,15 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma.service.js';
-import { error } from 'console';
+import { CheckoutDto } from './dto/checkout.dto.js';
 import { OrderStatus } from '../generated/prisma/enums.js';
-import { CreateOrderDto, OrderItemDto } from './dto/create-order.dto.js';
 
 @Injectable()
 export class OrderService {
   constructor(private readonly prisma: PrismaService) {}
-  async checkout(userId: number) {
+
+  async checkout(userId: number, dto: CheckoutDto) {
+    const { phone, address } = dto;
+
     return this.prisma.$transaction(async (db) => {
-      // 1. get cart with items + products
+      // 1. get cart
       const cart = await db.cart.findFirst({
         where: { userId },
         include: {
@@ -22,24 +28,26 @@ export class OrderService {
       });
 
       if (!cart || cart.items.length === 0) {
-        throw new Error('Cart is empty');
+        throw new BadRequestException('Cart is empty');
       }
 
-      let total: number = 0;
+      let total = 0;
 
-      // 2. validate + prepare order items
-      const orderItems: OrderItemDto[] = cart.items.map((item) => {
+      // 2. validate & build order items
+      const orderItems = cart.items.map((item) => {
         const product = item.product;
 
         if (!product) {
-          throw new Error(`Product ${item.productId} not found`);
+          throw new NotFoundException(`Product ${item.productId} not found`);
         }
 
         if (product.stock < item.quantity) {
-          throw new Error(`Not enough stock for product ${product.id}`);
+          throw new BadRequestException(
+            `Not enough stock for product ${product.name}`,
+          );
         }
 
-        const price: number = product.price;
+        const price = product.price;
         total += price * item.quantity;
 
         return {
@@ -49,7 +57,7 @@ export class OrderService {
         };
       });
 
-      // 3. update stock
+      // 3. update stock (important)
       await Promise.all(
         cart.items.map((item) =>
           db.product.update({
@@ -64,10 +72,12 @@ export class OrderService {
       );
 
       // 4. create order
-      const order: CreateOrderDto = await db.order.create({
+      const order = await db.order.create({
         data: {
           userId,
           total,
+          phone,
+          address,
           items: {
             create: orderItems,
           },
@@ -83,27 +93,16 @@ export class OrderService {
 
       // 5. clear cart
       await db.cartItem.deleteMany({
-        where: {
-          cartId: cart.id,
-        },
+        where: { cartId: cart.id },
       });
 
       return order;
     });
   }
 
-  async getOrders() {
-    const orders: CreateOrderDto[] = await this.prisma.order.findMany({
-      include: {
-        items: true,
-      },
-    });
-    return orders;
-  }
-
   async getMyOrders(userId: number) {
     return this.prisma.order.findMany({
-      where: { userId: userId },
+      where: { userId },
       include: {
         items: {
           include: {
@@ -117,24 +116,18 @@ export class OrderService {
     });
   }
 
-  async orderStatusUpdate(id: number, status: OrderStatus) {
+  async updateStatus(orderId: number, status: OrderStatus) {
     const order = await this.prisma.order.findUnique({
-      where: {
-        id,
-      },
+      where: { id: orderId },
     });
 
     if (!order) {
-      throw new error('order not found');
+      throw new NotFoundException('Order not found');
     }
 
-    const updatedOrder = await this.prisma.order.update({
-      where: { id: id },
-      data: {
-        status: status,
-      },
+    return this.prisma.order.update({
+      where: { id: orderId },
+      data: { status },
     });
-
-    return updatedOrder;
   }
 }

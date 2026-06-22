@@ -71,27 +71,31 @@ model Order {
 
   userId Int
   user   User  @relation(fields: [userId], references: [id])
-  total  Float
+
+  total Float
+
+  phone   String
+  address String
 
   status OrderStatus @default(PENDING)
-  items  OrderItem[]
 
-  payment Payment?
+  items OrderItem[]
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model OrderItem {
   id Int @id @default(autoincrement())
 
-  orderId   Int
+  orderId Int
+  order   Order @relation(fields: [orderId], references: [id])
+
   productId Int
+  product   Product @relation(fields: [productId], references: [id])
 
   quantity Int
-  price    Float
-
-  order   Order   @relation(fields: [orderId], references: [id])
-  product Product @relation(fields: [productId], references: [id])
+  price    Float // snapshot price
 }
 
 model Cart {
@@ -110,23 +114,23 @@ model CartItem {
   product   Product @relation(fields: [productId], references: [id])
 }
 
-enum PaymentStatus {
-  PENDING
-  SUCCESS
-  FAILED
-}
+// enum PaymentStatus {
+//   PENDING
+//   SUCCESS
+//   FAILED
+// }
 
-model Payment {
-  id      Int   @id @default(autoincrement())
-  orderId Int   @unique
-  order   Order @relation(fields: [orderId], references: [id])
+// model Payment {
+//   id      Int   @id @default(autoincrement())
+//   orderId Int   @unique
+//   order   Order @relation(fields: [orderId], references: [id])
 
-  amount   Float
-  status   PaymentStatus @default(PENDING)
-  provider String // stripe / cod / mock
+//   amount   Float
+//   status   PaymentStatus @default(PENDING)
+//   provider String // stripe / cod / mock
 
-  createdAt DateTime @default(now())
-}
+//   createdAt DateTime @default(now())
+// }
 
 model Review {
   id        Int      @id @default(autoincrement())
