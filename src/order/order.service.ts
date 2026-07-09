@@ -116,6 +116,26 @@ export class OrderService {
     });
   }
 
+  async getAllOrders() {
+    const orders = await this.prisma.order.findMany({
+      include: {
+        user: true,
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    console.log('Orders:', orders.length);
+
+    return orders;
+  }
+
   async updateStatus(orderId: number, status: OrderStatus) {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },

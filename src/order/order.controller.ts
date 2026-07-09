@@ -39,8 +39,8 @@ export class OrderController {
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @roles('ADMIN')
-  getAllOrders(@Req() req: AuthRequest) {
-    return this.orderService.getMyOrders(req.user.id);
+  getAllOrders() {
+    return this.orderService.getAllOrders();
   }
 
   // 🔄 Admin: Update Order Status

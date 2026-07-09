@@ -14,12 +14,7 @@ export class GetProductsDto {
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
-  minPrice?: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  maxPrice?: number;
+  price?: number;
 
   @IsOptional()
   @Type(() => Number)

@@ -10,6 +10,7 @@ import {
   Query,
   UseInterceptors,
   UploadedFile,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ProductService } from './product.service.js';
@@ -20,6 +21,8 @@ import { CreateProductDto } from './dto/create-product.dto.js';
 import { CustomPipe } from '../pipes/custom/custom.pipe.js';
 import { GetProductsDto } from './dto/get-product.dto.js';
 import { multerConfig } from '../config/multer.js';
+import { UpdateStockDto } from './dto/update-stock.dto.js';
+import { UpdateProductDto } from './dto/update-product.dto.js';
 
 @Controller('product')
 export class ProductController {
@@ -33,8 +36,6 @@ export class ProductController {
     @UploadedFile() file: Express.Multer.File,
     @Body(CustomPipe) body: CreateProductDto,
   ) {
-    console.log(file);
-
     const imagePath = file?.filename;
 
     return this.productService.create({
@@ -48,17 +49,41 @@ export class ProductController {
     return this.productService.getProducts();
   }
 
-  @Get(':id')
-  productDetail(@Param('id') id: string){
-     return this.productService.productDetail(id);
-  }
-
+   //recycle bin
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @roles('ADMIN')
-  @Patch(':id')
-  editProduct(@Param('id') id: string, @Body() productData: CreateProductDto) {
-    return this.productService.editProduct(id, productData);
+  @Get('recycle-bin')
+  productRecycleBin() {
+    return this.productService.productRecycleBin();
   }
 
+  //restore product
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @roles('ADMIN')
+  @Patch(':id/restore')
+  restoreProduct(@Param('id') id: string) {
+    return this.productService.restoreProduct(id);
+  }
+
+  @Get(':id')
+  productDetail(@Param('id') id: string) {
+    return this.productService.productDetail(id);
+  }
+
+  @Patch(':id')
+  @UseInterceptors(FileInterceptor('image', multerConfig))
+  editProduct(
+    @Param('id', ParseIntPipe) id: number,
+    @UploadedFile() file: Express.Multer.File,
+    @Body(CustomPipe) body: UpdateProductDto,
+  ) {
+    return this.productService.editProduct(id, {
+      ...body,
+      ...(file && { image: file.filename }),
+    });
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @roles('ADMIN')
   @Delete(':id')
   destroyProduct(@Param('id') id: string) {
@@ -66,7 +91,21 @@ export class ProductController {
   }
 
   @Get()
-  findAll(@Query() query: GetProductsDto) {
-    return this.productService.findAll(query);
+  searchProducts(@Query() query: GetProductsDto) {
+    return this.productService.searchProducts(query);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @roles('ADMIN')
+  @Patch(':id/increase-stock')
+  increaseStock(@Param('id') id: number, @Body() dto: UpdateStockDto) {
+    return this.productService.increaseStock(id, dto.stockCount);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @roles('ADMIN')
+  @Patch(':id/decrease-stock')
+  decreaseStock(@Param('id') id: number, @Body() dto: UpdateStockDto) {
+    return this.productService.decreaseStock(id, dto.stockCount);
   }
 }

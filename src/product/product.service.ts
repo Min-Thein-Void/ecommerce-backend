@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma.service.js';
 import { CreateProductDto } from './dto/create-product.dto.js';
 import { GetProductsDto } from './dto/get-product.dto.js';
 import { Prisma } from '../generated/prisma/client.js';
+import { UpdateProductDto } from './dto/update-product.dto.js';
 
 @Injectable()
 export class ProductService {
@@ -19,6 +20,9 @@ export class ProductService {
 
   async getProducts() {
     return this.prisma.product.findMany({
+      where: {
+        isDeleted: false,
+      },
       include: {
         category: true,
         reviews: {
@@ -31,12 +35,13 @@ export class ProductService {
   }
 
   async productDetail(id: string) {
-    if(!id){
-      throw new Error('id not found')
+    if (!id) {
+      throw new Error('id not found');
     }
-    return this.prisma.product.findUnique({
+    return this.prisma.product.findFirst({
       where: {
         id: Number(id),
+        isDeleted: false,
       },
       include: {
         category: true,
@@ -49,35 +54,26 @@ export class ProductService {
     });
   }
 
-  async editProduct(id: string, productData: CreateProductDto) {
+  async editProduct(id: number, productData: UpdateProductDto) {
+    return this.prisma.product.update({
+      where: { id },
+      data: productData,
+    });
+  }
+
+  async destroyProduct(id: string) {
     return this.prisma.product.update({
       where: {
         id: Number(id),
       },
       data: {
-        ...productData,
+        isDeleted: true,
       },
     });
   }
 
-  async destroyProduct(id: string) {
-    return this.prisma.product.delete({
-      where: {
-        id: Number(id),
-      },
-    });
-  }
-
-  async findAll(query: GetProductsDto) {
-    const {
-      search,
-      categoryId,
-      minPrice,
-      maxPrice,
-      minStock,
-      page = 1,
-      limit = 10,
-    } = query;
+  async searchProducts(query: GetProductsDto) {
+    const { search, categoryId, price, minStock } = query;
 
     const where: Prisma.ProductWhereInput = {};
 
@@ -104,16 +100,8 @@ export class ProductService {
     }
 
     // price range
-    if (minPrice || maxPrice) {
-      where.price = {};
-
-      if (minPrice) {
-        where.price.gte = minPrice;
-      }
-
-      if (maxPrice) {
-        where.price.lte = maxPrice;
-      }
+    if (price) {
+      where.price = price;
     }
 
     // stock filter
@@ -130,11 +118,67 @@ export class ProductService {
         category: true,
       },
 
-      skip: (page - 1) * limit,
-      take: limit,
-
       orderBy: {
         createdAt: 'desc',
+      },
+    });
+  }
+
+  async increaseStock(productId: number, stockCount: number) {
+    return await this.prisma.product.update({
+      where: {
+        id: productId,
+      },
+      data: {
+        stock: {
+          increment: stockCount,
+        },
+      },
+      include: {
+        category: true,
+      },
+    });
+  }
+
+  async decreaseStock(productId: number, stockCount: number) {
+    return await this.prisma.product.update({
+      where: {
+        id: productId,
+      },
+      data: {
+        stock: {
+          decrement: stockCount,
+        },
+      },
+      include: {
+        category: true,
+      },
+    });
+  }
+
+  async productRecycleBin() {
+    return this.prisma.product.findMany({
+      where: {
+        isDeleted: true,
+      },
+      include: {
+        category: true,
+        reviews: {
+          include: {
+            user: { select: { name: true } },
+          },
+        },
+      },
+    });
+  }
+
+  async restoreProduct(productId: string) {
+    return await this.prisma.product.update({
+      where: {
+        id: Number(productId),
+      },
+      data: {
+        isDeleted: false,
       },
     });
   }
