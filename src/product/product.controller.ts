@@ -19,7 +19,7 @@ import { RolesGuard } from '../common/guards/roles.guard.js';
 import { roles } from '../common/decorators/roles.decorator.js';
 import { CreateProductDto } from './dto/create-product.dto.js';
 import { CustomPipe } from '../pipes/custom/custom.pipe.js';
-import { GetProductsDto } from './dto/get-product.dto.js';
+import { FilterProductsDto } from './dto/filter-product.dto.js';
 import { multerConfig } from '../config/multer.js';
 import { UpdateStockDto } from './dto/update-stock.dto.js';
 import { UpdateProductDto } from './dto/update-product.dto.js';
@@ -91,7 +91,7 @@ export class ProductController {
   }
 
   @Get()
-  searchProducts(@Query() query: GetProductsDto) {
+  searchProducts(@Query() query: FilterProductsDto) {
     return this.productService.searchProducts(query);
   }
 

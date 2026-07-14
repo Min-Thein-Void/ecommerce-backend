@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { IsOptional, IsString, IsNumber } from 'class-validator';
 
-export class GetProductsDto {
+export class FilterProductsDto {
   @IsOptional()
   @IsString()
   search?: string;
@@ -24,10 +24,10 @@ export class GetProductsDto {
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
-  page?: number = 1;
+  page?: number;
 
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
-  limit?: number = 10;
+  limit?: number;
 }
