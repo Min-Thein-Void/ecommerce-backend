@@ -24,3 +24,25 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     };
   }
 }
+
+//  Client
+//    |
+//    | Authorization: Bearer xxxxx
+//    |
+//    v
+//  NestJS
+
+//  JwtAuthGuard
+//       |
+//       v
+//  JwtStrategy  <--------- Here
+//       |
+//       v
+//  Verify Token
+//       |
+//       |
+//    Valid ?
+//    /     \
+//  Yes      No
+//  |         |
+//  req.user   401 Unauthorized

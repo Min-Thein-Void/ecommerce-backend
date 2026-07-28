@@ -11,8 +11,9 @@ import {
   UseInterceptors,
   UploadedFile,
   ParseIntPipe,
+  UploadedFiles,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ProductService } from './product.service.js';
 import { JwtAuthGuard } from '../auth/jwt-auth/jwt-auth.guard.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
@@ -31,17 +32,12 @@ export class ProductController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @roles('ADMIN')
   @Post('create')
-  @UseInterceptors(FileInterceptor('image', multerConfig))
+  @UseInterceptors(FilesInterceptor('images', 5, multerConfig))
   createProduct(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFiles() files: Express.Multer.File[],
     @Body(CustomPipe) body: CreateProductDto,
   ) {
-    const imagePath = file?.filename;
-
-    return this.productService.create({
-      ...body,
-      image: imagePath,
-    });
+    return this.productService.create(body, files);
   }
 
   @Get('all')
@@ -49,7 +45,7 @@ export class ProductController {
     return this.productService.getProducts();
   }
 
-   //recycle bin
+  //recycle bin
   @UseGuards(JwtAuthGuard, RolesGuard)
   @roles('ADMIN')
   @Get('recycle-bin')

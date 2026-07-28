@@ -9,22 +9,35 @@ import { UpdateProductDto } from './dto/update-product.dto.js';
 export class ProductService {
   constructor(private prisma: PrismaService) {}
 
-  async create(data: CreateProductDto) {
+  async create(data: CreateProductDto, files: Express.Multer.File[]) {
     return this.prisma.product.create({
-      data,
+      data: {
+        ...data,
+
+        image: files[0]?.filename,
+
+        images: {
+          create: files.map((file) => ({
+            image: file.filename,
+          })),
+        },
+      },
+
       include: {
         category: true,
+        images: true,
       },
     });
   }
 
   async getProducts() {
-    return this.prisma.product.findMany({
+    const products = await this.prisma.product.findMany({
       where: {
         isDeleted: false,
       },
       include: {
         category: true,
+        images: true,
         reviews: {
           include: {
             user: { select: { name: true } },
@@ -32,6 +45,10 @@ export class ProductService {
         },
       },
     });
+
+    console.log(products[0]);
+
+    return products;
   }
 
   async productDetail(id: string) {
@@ -45,6 +62,7 @@ export class ProductService {
       },
       include: {
         category: true,
+        images: true,
         reviews: {
           include: {
             user: { select: { name: true } },
@@ -167,6 +185,7 @@ export class ProductService {
         // ဒီနေရာမှာ category information ပါယူမယ်
         include: {
           category: true,
+          images: true,
         },
 
         // Product တွေကို ဘယ်လို order စီမလဲ
