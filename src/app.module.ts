@@ -11,6 +11,7 @@ import { OrderModule } from './order/order.module.js';
 import { CartModule } from './cart/cart.module.js';
 import { LoggerMiddleware } from './common/middlewares/logger.middleware.js';
 import { ReviewModule } from './review/review.module.js';
+import { AdminModule } from './admin/admin.module.js';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ReviewModule } from './review/review.module.js';
     OrderModule,
     CartModule,
     ReviewModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
