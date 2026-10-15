@@ -90,7 +90,7 @@ export class ProductService {
     });
   }
 
-  //Mental Model
+  // Mental Model
   // findMany({
   //   where      // ဘယ် data တွေယူမလဲ
   //   skip       // ဘယ်နှခုကျော်မလဲ

@@ -1,4 +1,11 @@
-import { Body, Controller, Patch, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Patch,
+  Post,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
 import { UsersService } from './users.service.js';
 import { UseGuards, Get } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth/jwt-auth.guard.js';
@@ -20,12 +27,6 @@ export class UsersController {
     return this.usersService.create(body.name, body.email, body.password);
   }
 
-  // @UseGuards(JwtAuthGuard)
-  // @Get('profile')
-  // getProfile(@getUser() user: getUserDto) {
-  //   return user;
-  // }
-
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   getProfile(@getUser() user: GetUserDto) {
@@ -38,7 +39,7 @@ export class UsersController {
     return this.usersService.updateProfile(user.id, dto);
   }
 
-   @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Post('profile/image')
   @UseInterceptors(FileInterceptor('image', multerConfig))
   updateProfileImage(
