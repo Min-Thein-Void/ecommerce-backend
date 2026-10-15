@@ -6,6 +6,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -16,6 +17,7 @@ import { RolesGuard } from '../common/guards/roles.guard.js';
 import { roles } from '../common/decorators/roles.decorator.js';
 import type { AuthRequest } from '../Types/authRequest.js';
 import { CheckoutDto } from './dto/checkout.dto.js';
+import { FilterOrderDto } from './dto/filter-order.dto.js';
 
 @Controller('orders') // ✅ plural (REST standard)
 export class OrderController {
@@ -35,14 +37,6 @@ export class OrderController {
     return this.orderService.getMyOrders(req.user.id);
   }
 
-  // 🧑‍💼 Admin: Get All Orders
-  @Get()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @roles('ADMIN')
-  getAllOrders() {
-    return this.orderService.getAllOrders();
-  }
-
   // 🔄 Admin: Update Order Status
   @Patch(':id/status')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -53,4 +47,20 @@ export class OrderController {
   ) {
     return this.orderService.updateStatus(id, dto.status);
   }
+
+  // search and filter orders
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @roles('ADMIN')
+  findOrders(@Query() query: FilterOrderDto) {
+    return this.orderService.filterOrder(query.search ?? '');
+  }
+
+  // // 🧑‍💼 Admin: Get All Orders
+  // @Get()
+  // @UseGuards(JwtAuthGuard, RolesGuard)
+  // @roles('ADMIN')
+  // getAllOrders() {
+  //   return this.orderService.getAllOrders();
+  // }
 }

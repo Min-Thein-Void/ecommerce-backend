@@ -6,6 +6,7 @@ import {
 import { PrismaService } from '../prisma.service.js';
 import { CheckoutDto } from './dto/checkout.dto.js';
 import { OrderStatus } from '../generated/prisma/enums.js';
+import { Prisma } from '../generated/prisma/client.js';
 
 @Injectable()
 export class OrderService {
@@ -116,25 +117,25 @@ export class OrderService {
     });
   }
 
-  async getAllOrders() {
-    const orders = await this.prisma.order.findMany({
-      include: {
-        user: true,
-        items: {
-          include: {
-            product: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+  // async getAllOrders() {
+  //   const orders = await this.prisma.order.findMany({
+  //     include: {
+  //       user: true,
+  //       items: {
+  //         include: {
+  //           product: true,
+  //         },
+  //       },
+  //     },
+  //     orderBy: {
+  //       createdAt: 'desc',
+  //     },
+  //   });
 
-    console.log('Orders:', orders.length);
+  //   console.log('Orders:', orders.length);
 
-    return orders;
-  }
+  //   return orders;
+  // }
 
   async updateStatus(orderId: number, status: OrderStatus) {
     const order = await this.prisma.order.findUnique({
@@ -149,5 +150,70 @@ export class OrderService {
       where: { id: orderId },
       data: { status },
     });
+  }
+
+  async filterOrder(search: string) {
+    const keyword = search?.trim();
+
+    const where: Prisma.OrderWhereInput = keyword
+      ? {
+          OR: [
+            {
+              items: {
+                some: {
+                  product: {
+                    is: {
+                      name: {
+                        contains: keyword,
+                        mode: 'insensitive',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            { phone: { contains: keyword } },
+            {
+              address: {
+                contains: keyword,
+                mode: 'insensitive',
+              },
+            },
+            {
+              user: {
+                is: {
+                  name: {
+                    contains: keyword,
+                    mode: 'insensitive',
+                  },
+                },
+              },
+            },
+            {
+              user: {
+                is: {
+                  email: {
+                    contains: keyword,
+                    mode: 'insensitive',
+                  },
+                },
+              },
+            },
+          ],
+        }
+      : {};
+
+    const orders = await this.prisma.order.findMany({
+      where,
+      include: {
+        user: true,
+        items: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return orders;
   }
 }
